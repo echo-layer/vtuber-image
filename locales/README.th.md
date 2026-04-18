@@ -19,14 +19,17 @@
 
 [ [English](../README.md) | ภาษาไทย | [日本語](./README.ja.md) | [简体中文](./locales/README.zh.md) ]
 
-> [AI: TRANSLATE the professional tagline/description into THAI here]
-vtuber-image wraps ComfyUI behind a typed gRPC surface. It is explicitly NOT a ComfyUI fork — upstream ComfyUI runs as an external engine and we call it over REST. On each GenerationRequest (carrying a persona ID from vtuber-commons plus optional overrides), the service loads the matching curated workflow.json template, feeds it to ComfyUI, and returns the generated image with provenance metadata. Required models are downloaded from civitai through an allowlist loader that verifies hash, license, and NSFW tags against vtuber-commons before every load — preventing pickle/LoRA supply-chain attacks. Characters ship as versioned workflow.json templates alongside vtuber-commons persona schemas, so base image and persona stay in sync.
+vtuber-image ครอบ ComfyUI ด้วย typed gRPC surface — ไม่ใช่ fork ของ ComfyUI แต่เป็น wrapper ที่เรียก ComfyUI ภายนอกผ่าน REST ทุก GenerationRequest (persona ID จาก vtuber-commons + override) โหลด workflow.json template ที่ curate ไว้, ส่งเข้า ComfyUI, คืนรูปพร้อม provenance metadata — model ที่ต้องใช้ดาวน์โหลดจาก civitai ผ่าน allowlist loader ที่ verify hash, license, NSFW tag กับ vtuber-commons ก่อน load เสมอ กัน supply-chain attack แบบ pickle/LoRA
 
 ## ✨ ฟีเจอร์เด่น (Features)
-> [AI: TRANSLATE all 3 Features into THAI here]
+- 🚀 **Rust gRPC frontend + Python ComfyUI REST client — รับ GenerationRequest (persona ID + override) คืนรูปพร้อม provenance metadata**
+- 🛡️ **civitai loader พร้อม allowlist enforcement (hash, license, NSFW flag ตรวจกับ vtuber-commons ก่อน download และ load)**
+- 📊 **Library ของ workflow.json template ที่ curate — Flux dev q8 และ SDXL workflow ปรับจูนสำหรับ cute anime character generation**
 
 ## 🛠️ เริ่มต้นใช้งาน (Quick Start)
-> [AI: TRANSLATE getting_started_instructions into THAI here]
+```bash
+# ติดตั้ง Rust toolchain, Python 3.12+ และ ComfyUI instance ที่ VRAM อย่างน้อย 14 GB ตั้ง COMFYUI_URL ใน .env ชี้ไปที่ ComfyUI REST, ตั้ง CIVITAI_TOKEN สำหรับ authenticated download แล้ว cargo build && pip install -r python/requirements.txt ก่อน cargo run ที่ port 8083
+```
 
 ## 🗺️ การนำทาง (Navigation)
 - 🏗️ **[สถาปัตยกรรม (Architecture)](../ARCHITECTURE.md)**

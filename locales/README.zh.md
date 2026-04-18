@@ -19,14 +19,17 @@
 
 [ [English](../README.md) | [ภาษาไทย](./README.th.md) | [日本語](./README.ja.md) | 简体中文 ]
 
-> [AI: TRANSLATE the professional tagline/description into SIMPLIFIED CHINESE here]
-vtuber-image wraps ComfyUI behind a typed gRPC surface. It is explicitly NOT a ComfyUI fork — upstream ComfyUI runs as an external engine and we call it over REST. On each GenerationRequest (carrying a persona ID from vtuber-commons plus optional overrides), the service loads the matching curated workflow.json template, feeds it to ComfyUI, and returns the generated image with provenance metadata. Required models are downloaded from civitai through an allowlist loader that verifies hash, license, and NSFW tags against vtuber-commons before every load — preventing pickle/LoRA supply-chain attacks. Characters ship as versioned workflow.json templates alongside vtuber-commons persona schemas, so base image and persona stay in sync.
+vtuber-image 将 ComfyUI 包装在 typed gRPC 入口之后 —— 并非 ComfyUI 分支,而是通过 REST 调用外部 ComfyUI 的封装。每次 GenerationRequest (携带来自 vtuber-commons 的 persona ID 以及可选 override) 都加载预定的 workflow.json 模板喂入 ComfyUI,并返回带 provenance 元数据的生成图。所需模型通过 allowlist 加载器从 civitai 下载,每次加载前按 vtuber-commons 核验 hash、license 与 NSFW 标签 —— 防止 pickle/LoRA 供应链攻击。
 
 ## ✨ 特性 (Features)
-> [AI: TRANSLATE all 3 Features into SIMPLIFIED CHINESE here]
+- 🚀 **Rust gRPC 前端 + Python ComfyUI REST 客户端 —— 接收 GenerationRequest (persona ID 与 override) 并返回带 provenance 元数据的图像**
+- 🛡️ **civitai 加载器 + allowlist 强制 (下载/加载前用 vtuber-commons 校验 hash、license 与 NSFW)**
+- 📊 **策划过的 workflow.json 模板库 —— 针对可爱动漫角色生成调参的 Flux dev q8 与 SDXL 工作流**
 
 ## 🛠️ 快速开始 (Quick Start)
-> [AI: TRANSLATE getting_started_instructions into SIMPLIFIED CHINESE here]
+```bash
+# 安装 Rust toolchain、Python 3.12+ 以及运行中的 ComfyUI 实例 (显存至少 14 GB),.env 设置 COMFYUI_URL 指向 ComfyUI REST 端点,CIVITAI_TOKEN 用于鉴权下载,然后 cargo build && pip install -r python/requirements.txt,再 cargo run 在 8083 端口启动
+```
 
 ## 🗺️ 导航 (Navigation)
 - 🏗️ **[架构 (Architecture)](../ARCHITECTURE.md)**

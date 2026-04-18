@@ -19,14 +19,17 @@
 
 [ [English](../README.md) | [ภาษาไทย](./README.th.md) | 日本語 | [简体中文](./README.zh.md) ]
 
-> [AI: TRANSLATE the professional tagline/description into JAPANESE here]
-vtuber-image wraps ComfyUI behind a typed gRPC surface. It is explicitly NOT a ComfyUI fork — upstream ComfyUI runs as an external engine and we call it over REST. On each GenerationRequest (carrying a persona ID from vtuber-commons plus optional overrides), the service loads the matching curated workflow.json template, feeds it to ComfyUI, and returns the generated image with provenance metadata. Required models are downloaded from civitai through an allowlist loader that verifies hash, license, and NSFW tags against vtuber-commons before every load — preventing pickle/LoRA supply-chain attacks. Characters ship as versioned workflow.json templates alongside vtuber-commons persona schemas, so base image and persona stay in sync.
+vtuber-image は ComfyUI を typed gRPC サーフェスでラップする — ComfyUI のフォークではなく、外部 ComfyUI を REST 経由で呼び出すラッパー。GenerationRequest (vtuber-commons の persona ID + オーバーライド) 毎にキュレートされた workflow.json テンプレートをロードして ComfyUI に渡し、provenance メタデータ付きで生成画像を返却。必要なモデルは allowlist ローダー経由で civitai からダウンロードし、vtuber-commons に対して hash・ライセンス・NSFW タグを毎回検証する — pickle/LoRA サプライチェーン攻撃を防止。
 
 ## ✨ 特徴 (Features)
-> [AI: TRANSLATE all 3 Features into JAPANESE here]
+- 🚀 **Rust gRPC フロントエンド + Python ComfyUI REST クライアント — GenerationRequest (persona ID + オーバーライド) を受け provenance メタデータ付き画像を返却**
+- 🛡️ **civitai ローダー + allowlist 強制 (hash・ライセンス・NSFW フラグを vtuber-commons に照合してから download/load)**
+- 📊 **キュレートされた workflow.json テンプレートライブラリ — Flux dev q8 と SDXL ベースワークフロー (可愛いアニメキャラ生成向けチューニング済み)**
 
 ## 🛠️ クイックスタート (Quick Start)
-> [AI: TRANSLATE getting_started_instructions into JAPANESE here]
+```bash
+# Rust toolchain、Python 3.12+ と稼働中の ComfyUI インスタンス (VRAM 14 GB 以上) をインストール。.env の COMFYUI_URL を ComfyUI REST エンドポイントに、CIVITAI_TOKEN を認証ダウンロード用に設定後、cargo build && pip install -r python/requirements.txt、次いで cargo run でポート 8083 起動
+```
 
 ## 🗺️ ナวิゲーション (Navigation)
 - 🏗️ **[アーキテクチャ (Architecture)](../ARCHITECTURE.md)**
