@@ -1,0 +1,35 @@
+/
+├── GEMINI.md
+├── CLAUDE.md
+├── README.md
+├── STRUCTURE.tree
+├── ARCHITECTURE.md
+├── ROADMAP.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── LICENSE.md
+├── DEPLOYMENT_GUIDE.md
+├── DESIGN_DECISIONS.md
+├── FAQ.md
+├── GOVERNANCE.md
+├── SUPPORT.md
+├── TROUBLESHOOTING.md
+├── PHILOSOPHY.md
+├── MANIFESTO.md
+├── VISION.md
+├── STRATEGY.md
+├── PRINCIPLES.md
+├── locales/
+│   ├── README.th.md
+│   ├── README.ja.md
+│   └── README.zh.md
+└── .github/
+    ├── ISSUE_TEMPLATE/
+    │   ├── bug_report.yml
+    │   └── feature_request.yml
+    ├── PULL_REQUEST_TEMPLATE.md
+    └── workflows/
+        ├── ci.yml
+        ├── security.yml
+        └── pr_automation.yml
