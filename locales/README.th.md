@@ -17,7 +17,7 @@
 
 ---
 
-[ [English](../README.md) | ภาษาไทย | [日本語](./README.ja.md) | [简体中文](./locales/README.zh.md) ]
+[ [English](../README.md) | ภาษาไทย | [日本語](./README.ja.md) | [简体中文](./README.zh.md) ]
 
 vtuber-image ครอบ ComfyUI ด้วย typed gRPC surface — ไม่ใช่ fork ของ ComfyUI แต่เป็น wrapper ที่เรียก ComfyUI ภายนอกผ่าน REST ทุก GenerationRequest (persona ID จาก vtuber-commons + override) โหลด workflow.json template ที่ curate ไว้, ส่งเข้า ComfyUI, คืนรูปพร้อม provenance metadata — model ที่ต้องใช้ดาวน์โหลดจาก civitai ผ่าน allowlist loader ที่ verify hash, license, NSFW tag กับ vtuber-commons ก่อน load เสมอ กัน supply-chain attack แบบ pickle/LoRA
 

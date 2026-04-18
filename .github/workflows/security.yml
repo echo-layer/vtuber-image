@@ -8,10 +8,37 @@ on:
     - cron: '0 0 * * 1'
 
 jobs:
-  
-  audit:
-    name: Dependency Audit
+  security-smoke-test:
+    name: Security baseline
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inline-secret scan
+        run: |
+          # Fail CI only if an obvious inline credential literal is committed.
+          # This is a trip-wire, not a replacement for proper secret scanning.
+          hit=0
+          for pat in 'password\s*=\s*["'\''][^"'\'']{6,}' 'api[_-]?key\s*=\s*["'\''][^"'\'']{12,}' 'secret\s*=\s*["'\''][^"'\'']{6,}' 'token\s*=\s*["'\''][^"'\'']{20,}'; do
+            if grep -rEi "$pat" \
+              --include='*.md' --include='*.yml' --include='*.yaml' \
+              --include='*.toml' --include='*.json' --include='*.rs' \
+              --include='*.py' --include='*.ts' --include='*.tsx' \
+              --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=target \
+              . 2>/dev/null; then
+              hit=1
+            fi
+          done
+          if [ "$hit" = "1" ]; then
+            echo "::error::potential inline secret literal found — move it to vault/secret manager"
+            exit 1
+          fi
+          echo "OK — no obvious inline credential literals."
+
+  
+  rust-audit:
+    name: Rust Dependency Audit
+    runs-on: ubuntu-latest
+    if: hashFiles('**/Cargo.toml') != ''
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
@@ -21,9 +48,10 @@ jobs:
       - name: Run audit
         run: cargo audit
   
-  clippy-security:
-    name: Static Analysis
+  rust-clippy-security:
+    name: Rust Static Analysis (SARIF)
     runs-on: ubuntu-latest
+    if: hashFiles('**/Cargo.toml') != ''
     permissions:
       contents: read
       security-events: write

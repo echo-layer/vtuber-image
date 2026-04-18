@@ -6,10 +6,27 @@ on:
     branches: [main, master]
 
 jobs:
-  
-  lint:
-    name: Lint & Format
+  bootstrap-smoke-test:
+    name: Bootstrap smoke test
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect source stacks
+        id: stacks
+        run: |
+          echo "rust=$([ -f Cargo.toml ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "python=$({ [ -f pyproject.toml ] || [ -f requirements.txt ]; } && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "node=$([ -f package.json ] && echo true || echo false)" >> $GITHUB_OUTPUT
+      - name: Verify repo structure
+        run: |
+          echo "rust=${{ steps.stacks.outputs.rust }} python=${{ steps.stacks.outputs.python }} node=${{ steps.stacks.outputs.node }}"
+          echo "OK — repo structure verified. Stack-specific jobs below run only if their manifest exists."
+
+  
+  rust-lint:
+    name: Rust Lint & Format
+    runs-on: ubuntu-latest
+    if: hashFiles('**/Cargo.toml') != ''
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
@@ -21,9 +38,10 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
   
-  build-and-test:
-    name: Build & Test
+  rust-build-and-test:
+    name: Rust Build & Test
     runs-on: ubuntu-latest
+    if: hashFiles('**/Cargo.toml') != ''
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust

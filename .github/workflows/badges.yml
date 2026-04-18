@@ -1,0 +1,62 @@
+name: Update LOD badges
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'README.md'
+      - 'locales/**'
+      - 'STRUCTURE.tree'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Refresh LOD counts from current repo
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install tokei
+        run: |
+          set -e
+          ver="v13.0.0-alpha.8"
+          url="https://github.com/XAMPPRocky/tokei/releases/download/${ver}/tokei-x86_64-unknown-linux-gnu.tar.gz"
+          curl -fsSL "$url" -o tokei.tgz
+          tar xzf tokei.tgz
+          sudo mv tokei /usr/local/bin/tokei
+          tokei --version
+      - name: Count lines per language
+        id: count
+        run: |
+          set -e
+          json=$(tokei --output json)
+          echo "$json" > /tmp/tokei.json
+          total=$(echo "$json" | jq -r '.Total.code // 0')
+          echo "total=$total" >> $GITHUB_OUTPUT
+      - name: Update LOD numbers in README and locales
+        run: |
+          set -e
+          json=$(cat /tmp/tokei.json)
+          # For every language key (except Total), update any matching "<Lang>_LOD-<num>-"
+          langs=$(echo "$json" | jq -r 'keys[] | select(. != "Total")')
+          total="${{ steps.count.outputs.total }}"
+          files=$(find . -maxdepth 3 \( -name 'README.md' -o -path './locales/README.*.md' \) 2>/dev/null)
+          for f in $files; do
+            for lang in $langs; do
+              count=$(echo "$json" | jq -r --arg l "$lang" '.[$l].code // 0')
+              key=$(echo "$lang" | sed 's/ /_/g')
+              sed -i "s|${key}_LOD-[0-9]*-|${key}_LOD-${count}-|g" "$f"
+            done
+            sed -i "s|Total_LOD-[0-9]*-|Total_LOD-${total}-|g" "$f"
+          done
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(badges): refresh LOD counts [skip ci]"
+          file_pattern: "README.md locales/README.*.md"
