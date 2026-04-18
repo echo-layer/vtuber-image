@@ -26,27 +26,48 @@ jobs:
   rust-lint:
     name: Rust Lint & Format
     runs-on: ubuntu-latest
-    if: hashFiles('**/Cargo.toml') != ''
     steps:
       - uses: actions/checkout@v4
+      - name: Skip if no Cargo.toml
+        id: guard
+        run: |
+          if [ ! -f Cargo.toml ]; then
+            echo "::notice::No Cargo.toml yet; skipping Rust lint."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
       - name: Setup Rust
+        if: steps.guard.outputs.skip != 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - name: Check formatting
+        if: steps.guard.outputs.skip != 'true'
         run: cargo fmt --all --check
       - name: Clippy
+        if: steps.guard.outputs.skip != 'true'
         run: cargo clippy --all-targets --all-features -- -D warnings
   
   rust-build-and-test:
     name: Rust Build & Test
     runs-on: ubuntu-latest
-    if: hashFiles('**/Cargo.toml') != ''
     steps:
       - uses: actions/checkout@v4
+      - name: Skip if no Cargo.toml
+        id: guard
+        run: |
+          if [ ! -f Cargo.toml ]; then
+            echo "::notice::No Cargo.toml yet; skipping Rust build/test."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
       - name: Setup Rust
+        if: steps.guard.outputs.skip != 'true'
         uses: dtolnay/rust-toolchain@stable
       - name: Cache cargo
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -55,7 +76,9 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
+        if: steps.guard.outputs.skip != 'true'
         run: cargo build
       - name: Test
+        if: steps.guard.outputs.skip != 'true'
         run: cargo test
 
