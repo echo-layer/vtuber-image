@@ -24,12 +24,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install tokei
         run: |
-          set -e
-          ver="v13.0.0-alpha.8"
-          url="https://github.com/XAMPPRocky/tokei/releases/download/${ver}/tokei-x86_64-unknown-linux-gnu.tar.gz"
-          curl -fsSL "$url" -o tokei.tgz
-          tar xzf tokei.tgz
-          sudo mv tokei /usr/local/bin/tokei
+          # cargo install is slower than a binary fetch but rock-solid: ubuntu-latest
+          # ships Rust preinstalled, and we avoid the churn of tokei's release URL
+          # naming changing across versions.
+          cargo install tokei --locked
           tokei --version
       - name: Count lines per language
         id: count
