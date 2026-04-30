@@ -20,6 +20,14 @@ impl ImageGenerator for MyImageGenerator {
         let req = request.into_inner();
         println!("Received request for persona: {}", req.persona_id);
 
+        // Simple bridge to Python worker
+        let output = std::process::Command::new("python3")
+            .arg("python/comfy_client.py")
+            .output()
+            .map_err(|e| Status::internal(format!("Failed to execute python worker: {}", e)))?;
+
+        println!("Python output: {:?}", String::from_utf8_lossy(&output.stdout));
+
         let reply = GenerationResponse {
             image_url: "http://placeholder.com/image.png".to_string(),
             metadata: std::collections::HashMap::new(),
