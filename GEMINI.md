@@ -24,6 +24,7 @@ This file is the operational core. Gemini CLI MUST follow these protocols to mai
    - Run `pre-commit run --all-files` if available.
 
 ## 🛠️ Tooling & Standards
+- **Cross-Repo Constraints:** You do NOT have permission to modify other `vtuber-*` repositories directly. If a change is required in a sibling repository (e.g., `vtuber-commons`), you MUST create a GitHub Issue in that repository describing the need. Close the issue only once the corresponding task is complete.
 - **Translation:** All technical specifications are English. `locales/` MUST be kept in sync and translated for users documentation.
 - **Workflow Mastery:** Use `/superpower:executing-plans` for feature work.
 - **Automation:** Refer to `.github/workflows/pr_automation.yml` for server-side PR handling.
