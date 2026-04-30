@@ -23,8 +23,15 @@ This file is the operational core for Claude. Gemini CLI and Claude MUST follow 
    - Trigger stack-specific formatting (e.g., `cargo fmt`).
    - Run `pre-commit run --all-files` if available.
 
+## 🌐 Ecosystem Interaction Protocol
+1. **Multi-Repo Boundaries:** You MUST NOT directly modify code in other `vtuber-*` repositories (especially `vtuber-contracts`).
+2. **Issue-Based Communication:** When a change or resource is needed from another repository, you MUST:
+   - Draft the requirements locally in `docs/specs/ecosystem/`.
+   - Create a GitHub Issue in the target repository using `gh issue create`.
+   - Reference the Issue URL in your local progress reports.
+3. **Dependency Sync:** Only implement features depending on external changes (like new Schemas) after the corresponding Issue is resolved and released.
+
 ## 🛠️ Tooling & Standards
-- **Cross-Repo Constraints:** Claude and Gemini do NOT have permission to modify other `vtuber-*` repositories directly. If a change is required in a sibling repository (e.g., `vtuber-commons`), you MUST create a GitHub Issue in that repository describing the need. Close the issue only once the corresponding task is complete.
 - **Translation:** All technical specifications are English. `locales/` MUST be kept in sync and translated for users documentation.
 - **Workflow Mastery:** Use `/superpower:executing-plans` for feature work.
 - **Automation:** Refer to `.github/workflows/pr_automation.yml` for server-side PR handling.
