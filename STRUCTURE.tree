@@ -2,6 +2,7 @@
 ├── ARCHITECTURE.md
 ├── build.rs
 ├── Cargo.toml
+├── ci_fail.log
 ├── CLAUDE.md
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
@@ -20,6 +21,7 @@
 │   ├── ISSUE_TEMPLATE
 │   │   ├── bug_report.yml
 │   │   └── feature_request.yml
+│   ├── labeler.yml
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   └── workflows
 │       ├── badges.yml
@@ -35,6 +37,7 @@
 │   └── README.zh.md
 ├── MANIFESTO.md
 ├── PHILOSOPHY.md
+├── pr_auto_fail.log
 ├── .pre-commit-config.yaml
 ├── PRINCIPLES.md
 ├── proto
@@ -46,22 +49,14 @@
 │   └── requirements.txt
 ├── README.md
 ├── ROADMAP.md
+├── security_fail.log
 ├── SECURITY.md
 ├── src
 │   └── main.rs
 ├── STRATEGY.md
 ├── STRUCTURE.tree
-├── .superpowers
-│   └── brainstorm
-│       └── 1272528-1777550082
-│           ├── content
-│           │   ├── image-retrieval.html
-│           │   └── persona-schema-design.html
-│           └── state
-│               ├── server.pid
-│               └── server-stopped
 ├── SUPPORT.md
 ├── TROUBLESHOOTING.md
 └── VISION.md
 
-19 directories, 46 files
+14 directories, 46 files
