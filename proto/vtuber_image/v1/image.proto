@@ -1,0 +1,22 @@
+syntax = "proto3";
+package vtuber_image.v1;
+
+service ImageGenerator {
+  rpc Generate(GenerationRequest) returns (GenerationResponse);
+}
+
+message GenerationRequest {
+  string persona_id = 1;
+  PersonaOverrides overrides = 2;
+}
+
+message PersonaOverrides {
+  string hair_style = 1;
+  string eye_color = 2;
+  string outfit = 3;
+}
+
+message GenerationResponse {
+  string image_url = 1;
+  map<string, string> metadata = 2;
+}

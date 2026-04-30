@@ -1,0 +1,22 @@
+# Labeler configuration
+# Refer to https://github.com/actions/labeler for documentation
+
+rust:
+  - changed-files:
+    - any-glob-to-any-file: ['Cargo.toml', 'Cargo.lock', 'src/**/*.rs', 'proto/**/*.proto']
+
+python:
+  - changed-files:
+    - any-glob-to-any-file: ['python/**/*.py', 'requirements.txt']
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: ['*.md', 'locales/**/*.md', 'docs/**/*.md']
+
+enhancement:
+  - changed-files:
+    - any-glob-to-any-file: ['src/**/*', 'proto/**/*']
+
+chore:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/**/*', '.gitignore', '.pre-commit-config.yaml']

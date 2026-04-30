@@ -47,6 +47,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - name: Skip if no Cargo.toml
@@ -63,6 +64,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - name: Install protoc
+        if: steps.guard.outputs.skip != 'true'
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - name: Install SARIF tools
         if: steps.guard.outputs.skip != 'true'
         run: cargo install clippy-sarif sarif-fmt
