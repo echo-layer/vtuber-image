@@ -47,6 +47,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - name: Skip if no Cargo.toml
