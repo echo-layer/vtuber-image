@@ -26,7 +26,10 @@ impl ImageGenerator for MyImageGenerator {
             .output()
             .map_err(|e| Status::internal(format!("Failed to execute python worker: {}", e)))?;
 
-        println!("Python output: {:?}", String::from_utf8_lossy(&output.stdout));
+        println!(
+            "Python output: {:?}",
+            String::from_utf8_lossy(&output.stdout)
+        );
 
         let reply = GenerationResponse {
             image_url: "http://placeholder.com/image.png".to_string(),
