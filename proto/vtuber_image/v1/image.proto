@@ -1,11 +1,13 @@
 syntax = "proto3";
 package vtuber_image.v1;
 
-service ImageGenerator {
-  rpc Generate(GenerationRequest) returns (GenerationResponse);
+// ImageGeneratorService defines how vtuber-brain or vtuber-api requests
+// images from vtuber-image.
+service ImageGeneratorService {
+  rpc Generate(GenerateRequest) returns (GenerateResponse);
 }
 
-message GenerationRequest {
+message GenerateRequest {
   string persona_id = 1;
   PersonaOverrides overrides = 2;
 }
@@ -16,7 +18,7 @@ message PersonaOverrides {
   string outfit = 3;
 }
 
-message GenerationResponse {
+message GenerateResponse {
   string image_url = 1;
   map<string, string> metadata = 2;
 }

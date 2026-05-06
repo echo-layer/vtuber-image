@@ -1,6 +1,8 @@
 use tonic::{transport::Server, Request, Response, Status};
-use vtuber_image::v1::image_generator_server::{ImageGenerator, ImageGeneratorServer};
-use vtuber_image::v1::{GenerationRequest, GenerationResponse};
+use vtuber_image::v1::image_generator_service_server::{
+    ImageGeneratorService, ImageGeneratorServiceServer,
+};
+use vtuber_image::v1::{GenerateRequest, GenerateResponse};
 
 pub mod vtuber_image {
     pub mod v1 {
@@ -9,14 +11,14 @@ pub mod vtuber_image {
 }
 
 #[derive(Default)]
-pub struct MyImageGenerator {}
+pub struct MyImageGeneratorService {}
 
 #[tonic::async_trait]
-impl ImageGenerator for MyImageGenerator {
+impl ImageGeneratorService for MyImageGeneratorService {
     async fn generate(
         &self,
-        request: Request<GenerationRequest>,
-    ) -> Result<Response<GenerationResponse>, Status> {
+        request: Request<GenerateRequest>,
+    ) -> Result<Response<GenerateResponse>, Status> {
         let req = request.into_inner();
         println!("Received request for persona: {}", req.persona_id);
 
@@ -26,12 +28,9 @@ impl ImageGenerator for MyImageGenerator {
             .output()
             .map_err(|e| Status::internal(format!("Failed to execute python worker: {}", e)))?;
 
-        println!(
-            "Python output: {:?}",
-            String::from_utf8_lossy(&output.stdout)
-        );
+        println!("Python output: {:?}", String::from_utf8_lossy(&output.stdout));
 
-        let reply = GenerationResponse {
+        let reply = GenerateResponse {
             image_url: "http://placeholder.com/image.png".to_string(),
             metadata: std::collections::HashMap::new(),
         };
@@ -43,12 +42,12 @@ impl ImageGenerator for MyImageGenerator {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:8083".parse()?;
-    let generator = MyImageGenerator::default();
+    let generator = MyImageGeneratorService::default();
 
-    println!("ImageGenerator server listening on {}", addr);
+    println!("ImageGeneratorService server listening on {}", addr);
 
     Server::builder()
-        .add_service(ImageGeneratorServer::new(generator))
+        .add_service(ImageGeneratorServiceServer::new(generator))
         .serve(addr)
         .await?;
 
