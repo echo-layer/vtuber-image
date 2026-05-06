@@ -3,6 +3,7 @@ import json
 import uuid
 import boto3
 import os
+import time
 from dotenv import load_dotenv
 
 class ComfyClient:
@@ -10,7 +11,18 @@ class ComfyClient:
         load_dotenv()
         self.server_address = server_address
         self.client_id = str(uuid.uuid4())
-        self.s3 = boto3.client('s3')
+        
+        # S3 / SeaweedFS Configuration
+        s3_endpoint = os.getenv("S3_ENDPOINT_URL", "http://localhost:8333")
+        s3_access_key = os.getenv("S3_ACCESS_KEY", "any")
+        s3_secret_key = os.getenv("S3_SECRET_KEY", "any")
+        
+        self.s3 = boto3.client(
+            's3',
+            endpoint_url=s3_endpoint,
+            aws_access_key_id=s3_access_key,
+            aws_secret_access_key=s3_secret_key
+        )
 
     def fetch_template(self, bucket, key):
         response = self.s3.get_object(Bucket=bucket, Key=key)
@@ -40,6 +52,32 @@ class ComfyClient:
         data = json.dumps(p).encode('utf-8')
         response = requests.post(f"{self.server_address}/prompt", data=data)
         return response.json()
+
+    def wait_for_completion(self, prompt_id):
+        while True:
+            response = requests.get(f"{self.server_address}/history/{prompt_id}")
+            history = response.json()
+            if prompt_id in history:
+                outputs = history[prompt_id].get("outputs", {})
+                for node_id in outputs:
+                    node_output = outputs[node_id]
+                    if "images" in node_output:
+                        return node_output["images"][0]["filename"]
+            time.sleep(1)
+
+    def upload_result(self, local_filename, target_bucket, target_key):
+        # Fetch image bytes from ComfyUI
+        response = requests.get(f"{self.server_address}/view?filename={local_filename}")
+        image_bytes = response.content
+        
+        # Upload to S3/SeaweedFS
+        self.s3.put_object(
+            Bucket=target_bucket,
+            Key=target_key,
+            Body=image_bytes,
+            ContentType='image/png'
+        )
+        return f"s3://{target_bucket}/{target_key}"
 
 if __name__ == "__main__":
     client = ComfyClient()
