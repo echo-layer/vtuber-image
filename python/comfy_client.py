@@ -4,6 +4,7 @@ import uuid
 import boto3
 import os
 import time
+import sys
 from dotenv import load_dotenv
 
 class ComfyClient:
@@ -81,4 +82,34 @@ class ComfyClient:
 
 if __name__ == "__main__":
     client = ComfyClient()
-    print(f"Client initialized with ID: {client.client_id}")
+    
+    # Read request from stdin
+    input_data = sys.stdin.read()
+    if not input_data:
+        sys.exit(0)
+        
+    try:
+        req = json.loads(input_data)
+        
+        # 1. Fetch template
+        workflow = client.fetch_template(req['template_bucket'], req['template_key'])
+        
+        # 2. Inject overrides
+        workflow = client.inject_overrides(workflow, req.get('overrides', {}))
+        
+        # 3. Queue prompt
+        prompt_response = client.queue_prompt(workflow)
+        prompt_id = prompt_response['prompt_id']
+        
+        # 4. Wait for completion
+        filename = client.wait_for_completion(prompt_id)
+        
+        # 5. Upload result
+        s3_url = client.upload_result(filename, req['output_bucket'], req['output_key'])
+        
+        # 6. Output result URL to stdout for Rust to pick up
+        print(s3_url)
+        
+    except Exception as e:
+        print(f"Error: {str(e)}", file=sys.stderr)
+        sys.exit(1)

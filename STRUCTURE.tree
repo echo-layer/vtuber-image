@@ -1,8 +1,10 @@
 .
 ├── ARCHITECTURE.md
+├── .benchmarks
 ├── buf.gen.yaml
 ├── buf.yaml
 ├── build.rs
+├── Cargo.lock
 ├── Cargo.toml
 ├── CLAUDE.md
 ├── CODE_OF_CONDUCT.md
@@ -38,11 +40,19 @@
 │   └── vtuber_image
 │       └── v1
 │           └── image.proto
+├── .pytest_cache
+│   ├── CACHEDIR.TAG
+│   ├── .gitignore
+│   ├── README.md
+│   └── v
+│       └── cache
+│           └── nodeids
 ├── python
 │   ├── comfy_client.py
 │   ├── __pycache__
 │   │   └── comfy_client.cpython-314.pyc
-│   └── requirements.txt
+│   ├── requirements.txt
+│   └── test_comfy_client.py
 ├── README.md
 ├── ROADMAP.md
 ├── SECURITY.md
@@ -54,4 +64,4 @@
 ├── TROUBLESHOOTING.md
 └── VISION.md
 
-11 directories, 44 files
+15 directories, 50 files
