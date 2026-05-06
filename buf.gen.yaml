@@ -1,0 +1,8 @@
+version: v2
+managed:
+  enabled: false
+plugins:
+  - remote: buf.build/protocolbuffers/python:v30.0
+    out: python/generated
+  - remote: buf.build/protocolbuffers/pyi:v30.0
+    out: python/generated
