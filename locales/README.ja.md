@@ -11,7 +11,7 @@
 
 ![Rust LOD](https://img.shields.io/badge/Rust_LOD-47-dea584.svg) ![Python LOD](https://img.shields.io/badge/Python_LOD-15-3776AB.svg) ![Python LOD](https://img.shields.io/badge/Python_LOD-15-3776AB.svg) ![Total LOD](https://img.shields.io/badge/Total_LOD-128-brightgreen.svg)
 
-[![Rust](https://img.shields.io/badge/Rust-dea584?logo=rust&logoColor=white)](./) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](./) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](./) [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](./)
+[![Rust](https://img.shields.io/badge/Rust-dea584?logo=rust&logoColor=white)](https://www.rust-lang.org/) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 
 </div>
 
