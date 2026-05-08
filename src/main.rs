@@ -29,6 +29,15 @@ impl ImageGeneratorService for MyImageGeneratorService {
         let req = request.into_inner();
         println!("Received request for persona: {}", req.persona_id);
 
+        // Task 2: Rust gRPC Enforcement
+        // Placeholder check: Is the persona_id in the allowlist cache?
+        if self.guard_cache.get_model(&req.persona_id).is_none() {
+            return Err(Status::permission_denied(format!(
+                "Requested configuration (persona: {}) is not in the allowlist",
+                req.persona_id
+            )));
+        }
+
         let input_payload = serde_json::json!({
             "template_bucket": std::env::var("S3_BUCKET_TEMPLATES").unwrap_or_else(|_| "templates".to_string()),
             "template_key": format!("{}.json", req.persona_id),
