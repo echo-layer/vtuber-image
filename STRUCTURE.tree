@@ -1,20 +1,17 @@
 .
 ├── ARCHITECTURE.md
+├── .benchmarks
+├── buf.gen.yaml
+├── buf.yaml
 ├── build.rs
+├── Cargo.lock
 ├── Cargo.toml
-├── ci_fail.log
 ├── CLAUDE.md
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
 ├── DEPLOYMENT_GUIDE.md
 ├── DESIGN_DECISIONS.md
 ├── docker-compose.yml
-├── docs
-│   └── superpowers
-│       ├── plans
-│       │   └── 2026-04-30-vtuber-image-foundation.md
-│       └── specs
-│           └── 2026-04-30-vtuber-image-foundation-design.md
 ├── FAQ.md
 ├── GEMINI.md
 ├── .github
@@ -37,19 +34,27 @@
 │   └── README.zh.md
 ├── MANIFESTO.md
 ├── PHILOSOPHY.md
-├── pr_auto_fail.log
 ├── .pre-commit-config.yaml
 ├── PRINCIPLES.md
 ├── proto
 │   └── vtuber_image
 │       └── v1
 │           └── image.proto
+├── .pytest_cache
+│   ├── CACHEDIR.TAG
+│   ├── .gitignore
+│   ├── README.md
+│   └── v
+│       └── cache
+│           └── nodeids
 ├── python
 │   ├── comfy_client.py
-│   └── requirements.txt
+│   ├── __pycache__
+│   │   └── comfy_client.cpython-314.pyc
+│   ├── requirements.txt
+│   └── test_comfy_client.py
 ├── README.md
 ├── ROADMAP.md
-├── security_fail.log
 ├── SECURITY.md
 ├── src
 │   └── main.rs
@@ -59,4 +64,4 @@
 ├── TROUBLESHOOTING.md
 └── VISION.md
 
-14 directories, 46 files
+15 directories, 50 files
