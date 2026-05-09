@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vtuber-image
+  namespace: vtuber-image
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vtuber-image
+  template:
+    metadata:
+      labels:
+        app: vtuber-image
+    spec:
+      containers:
+        - name: vtuber-image
+          image: echo-layer/vtuber-image:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: CONFIG_PATH
+              value: "/mnt/config"
+            - name: ALLOWLIST_FILENAME
+              value: "allowlist.json"
+            - name: S3_ENDPOINT_URL
+              value: "http://seaweedfs-s3:8333"
+            - name: COMFYUI_URL
+              value: "http://comfyui:8188"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /mnt/config
+              readOnly: true
+        
+        # git-sync Sidecar to sync vtuber-commons
+        - name: git-sync
+          image: registry.k8s.io/git-sync/git-sync:v4.2.3
+          args:
+            - "--repo=https://github.com/echo-layer/vtuber-commons"
+            - "--branch=main"
+            - "--root=/mnt/config"
+            - "--dest=vtuber-commons"
+            - "--wait=60"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /mnt/config
+      
+      volumes:
+        - name: config-volume
+          emptyDir: {}

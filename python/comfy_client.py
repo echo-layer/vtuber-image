@@ -80,6 +80,45 @@ class ComfyClient:
         )
         return f"s3://{target_bucket}/{target_key}"
 
+    def verify_model(self, model_id, expected_hash, allow_nsfw):
+        print(f"Verifying model {model_id} on Civitai...", file=sys.stderr)
+        # Using a timeout to avoid hanging
+        try:
+            response = requests.get(f"https://civitai.com/api/v1/models/{model_id}", timeout=10)
+            if response.status_code != 200:
+                raise Exception(f"Failed to fetch metadata for model {model_id} from Civitai: {response.status_code}")
+                
+            metadata = response.json()
+            
+            # Check NSFW if restricted
+            if not allow_nsfw and metadata.get('nsfw', False):
+                raise Exception(f"Model {model_id} is marked as NSFW, but NSFW is not allowed.")
+                
+            found_hash = False
+            versions = metadata.get('modelVersions', [])
+            if not versions:
+                raise Exception(f"No versions found for model {model_id}")
+                
+            # We check all versions for the hash to be safe, though usually it's the latest
+            for version in versions:
+                for file in version.get('files', []):
+                    hashes = file.get('hashes', {})
+                    sha256 = hashes.get('SHA256')
+                    if sha256:
+                        if sha256.lower() == expected_hash.lower():
+                            found_hash = True
+                            break
+                if found_hash:
+                    break
+                        
+            if not found_hash:
+                raise Exception(f"SHA256 hash mismatch for model {model_id}. Expected {expected_hash}")
+                
+            print(f"Model {model_id} verified successfully.", file=sys.stderr)
+            return True
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Network error verifying model {model_id}: {str(e)}")
+
 if __name__ == "__main__":
     client = ComfyClient()
     
@@ -96,6 +135,15 @@ if __name__ == "__main__":
         
         # 2. Inject overrides
         workflow = client.inject_overrides(workflow, req.get('overrides', {}))
+        
+        # 2.5 Verify models
+        model_auth = req.get('model_auth', [])
+        for auth in model_auth:
+            client.verify_model(
+                auth['model_id'],
+                auth['expected_hash'],
+                auth.get('allow_nsfw', False)
+            )
         
         # 3. Queue prompt
         prompt_response = client.queue_prompt(workflow)

@@ -45,5 +45,64 @@ class TestComfyClient(unittest.TestCase):
         self.assertEqual(kwargs['Key'], "test_key")
         self.assertEqual(kwargs['Body'], b"fake_image_data")
 
+    @patch('requests.get')
+    def test_verify_model_success(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "nsfw": False,
+            "modelVersions": [
+                {
+                    "files": [
+                        {
+                            "hashes": {
+                                "SHA256": "ABCDEF123456"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
+        
+        result = self.client.verify_model("123", "abcdef123456", False)
+        self.assertTrue(result)
+
+    @patch('requests.get')
+    def test_verify_model_nsfw_rejected(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "nsfw": True,
+            "modelVersions": []
+        }
+        mock_get.return_value = mock_response
+        
+        with self.assertRaisesRegex(Exception, "Model 123 is marked as NSFW"):
+            self.client.verify_model("123", "hash", False)
+
+    @patch('requests.get')
+    def test_verify_model_hash_mismatch(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "nsfw": False,
+            "modelVersions": [
+                {
+                    "files": [
+                        {
+                            "hashes": {
+                                "SHA256": "WRONGHASH"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
+        
+        with self.assertRaisesRegex(Exception, "SHA256 hash mismatch"):
+            self.client.verify_model("123", "expectedhash", False)
+
 if __name__ == '__main__':
     unittest.main()
