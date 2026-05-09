@@ -13,6 +13,7 @@ serde_json = "1.0"
 anyhow = "1.0"
 notify = "6.1"
 uuid = { version = "1.0", features = ["v4"] }
+oci-distribution = "0.11"
 
 [build-dependencies]
 tonic-build = "0.11"

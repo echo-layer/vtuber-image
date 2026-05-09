@@ -7,8 +7,10 @@ use vtuber_image::v1::image_generator_service_server::{
     ImageGeneratorService, ImageGeneratorServiceServer,
 };
 use vtuber_image::v1::{GenerateRequest, GenerateResponse};
+use std::sync::Arc;
 
 pub mod guard;
+pub mod registry;
 
 pub mod vtuber_image {
     pub mod v1 {
@@ -18,6 +20,7 @@ pub mod vtuber_image {
 
 pub struct MyImageGeneratorService {
     pub guard_cache: guard::cache::GuardCache,
+    pub registry_client: Arc<registry::OCIClient>,
 }
 
 #[tonic::async_trait]
@@ -136,7 +139,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    let generator = MyImageGeneratorService { guard_cache };
+    let cache_dir = std::env::var("CACHE_DIR").unwrap_or_else(|_| "cache/workflows".to_string());
+    let registry_client = Arc::new(registry::OCIClient::new(Path::new(&cache_dir).to_path_buf()));
+
+    let generator = MyImageGeneratorService { 
+        guard_cache,
+        registry_client,
+    };
 
     println!("ImageGeneratorService server listening on {}", addr);
 
