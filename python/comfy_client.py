@@ -130,8 +130,13 @@ if __name__ == "__main__":
     try:
         req = json.loads(input_data)
         
-        # 1. Fetch template
-        workflow = client.fetch_template(req['template_bucket'], req['template_key'])
+        # 1. Fetch template or use provided workflow_json
+        if 'workflow_json' in req:
+            workflow = req['workflow_json']
+            if isinstance(workflow, str):
+                workflow = json.loads(workflow)
+        else:
+            workflow = client.fetch_template(req['template_bucket'], req['template_key'])
         
         # 2. Inject overrides
         workflow = client.inject_overrides(workflow, req.get('overrides', {}))

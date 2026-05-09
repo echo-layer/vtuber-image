@@ -32,18 +32,35 @@ impl ImageGeneratorService for MyImageGeneratorService {
         let req = request.into_inner();
         println!("Received request for persona: {}", req.persona_id);
 
-        // Task 2: Rust gRPC Enforcement
-        // Placeholder check: Is the persona_id in the allowlist cache?
-        if self.guard_cache.get_model(&req.persona_id).is_none() {
-            return Err(Status::permission_denied(format!(
-                "Requested configuration (persona: {}) is not in the allowlist",
-                req.persona_id
-            )));
-        }
+        // Task 2: Reactive Persona Mapping
+        let config_path = std::env::var("CONFIG_PATH").unwrap_or_else(|_| "config".to_string());
+        
+        // 1. Get Persona Config (from cache or file)
+        let persona_config = if let Some(config) = self.guard_cache.get_persona(&req.persona_id) {
+            config
+        } else {
+            let persona_path = Path::new(&config_path).join("personas").join(format!("{}.toml", req.persona_id));
+            if !persona_path.exists() {
+                return Err(Status::not_found(format!("Persona config not found for {}", req.persona_id)));
+            }
 
+            let content = std::fs::read_to_string(&persona_path)
+                .map_err(|e| Status::internal(format!("Failed to read persona file: {}", e)))?;
+            let config: guard::cache::PersonaConfig = toml::from_str(&content)
+                .map_err(|e| Status::internal(format!("Failed to parse persona TOML: {}", e)))?;
+            
+            self.guard_cache.insert_persona(req.persona_id.clone(), config.clone());
+            config
+        };
+
+        // 2. Pull workflow from OCI Registry
+        let image_registry_url = &persona_config.assets.image_registry;
+        let workflow_json = self.registry_client.pull_workflow(image_registry_url).await
+            .map_err(|e| Status::internal(format!("Failed to pull workflow from registry: {}", e)))?;
+
+        // 3. Prepare payload for Python orchestration
         let input_payload = serde_json::json!({
-            "template_bucket": std::env::var("S3_BUCKET_TEMPLATES").unwrap_or_else(|_| "templates".to_string()),
-            "template_key": format!("{}.json", req.persona_id),
+            "workflow_json": workflow_json,
             "overrides": {
                 "hair_style": req.overrides.as_ref().map(|o| o.hair_style.clone()).unwrap_or_default(),
                 "eye_color": req.overrides.as_ref().map(|o| o.eye_color.clone()).unwrap_or_default(),
