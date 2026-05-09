@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-active-success)](./)
 
-![Rust LOD](https://img.shields.io/badge/Rust_LOD-168-dea584.svg) ![Python LOD](https://img.shields.io/badge/Python_LOD-210-3776AB.svg) ![Total LOD](https://img.shields.io/badge/Total_LOD-493-brightgreen.svg)
+![Rust LOD](https://img.shields.io/badge/Rust_LOD-293-dea584.svg) ![Python LOD](https://img.shields.io/badge/Python_LOD-215-3776AB.svg) ![Total LOD](https://img.shields.io/badge/Total_LOD-678-brightgreen.svg)
 
 [![Rust](https://img.shields.io/badge/Rust-dea584?logo=rust&logoColor=white)](https://www.rust-lang.org/) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 
