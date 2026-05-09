@@ -1,5 +1,5 @@
-use oci_distribution::{client::Client, Reference};
 use anyhow::Context;
+use oci_distribution::{client::Client, Reference};
 use std::path::PathBuf;
 use tokio::fs;
 
@@ -18,23 +18,37 @@ impl OCIClient {
 
     pub async fn pull_workflow(&self, image_url: &str) -> anyhow::Result<String> {
         let reference: Reference = image_url.parse().context("Failed to parse image URL")?;
-        
+
         // Smart Cache Logic: Use sanitized image_url as filename
         let cache_filename = format!("{}.json", image_url.replace("/", "_").replace(":", "_"));
         let cache_path = self.cache_dir.join(cache_filename);
 
         if cache_path.exists() {
             println!("Cache hit for workflow: {}", image_url);
-            return fs::read_to_string(cache_path).await.context("Failed to read cached workflow");
+            return fs::read_to_string(cache_path)
+                .await
+                .context("Failed to read cached workflow");
         }
 
-        println!("Cache miss for workflow: {}, pulling from registry...", image_url);
-        
+        println!(
+            "Cache miss for workflow: {}, pulling from registry...",
+            image_url
+        );
+
         let auth = oci_distribution::secrets::RegistryAuth::Anonymous;
-        
+
         // Pull the image data
         // For simplicity, we pull the manifest and then the blobs (layers)
-        let image_data = self.client.pull(&reference, &auth, vec!["application/vnd.oci.image.layer.v1.tar+gzip", "application/vnd.docker.image.rootfs.diff.tar.gzip"])
+        let image_data = self
+            .client
+            .pull(
+                &reference,
+                &auth,
+                vec![
+                    "application/vnd.oci.image.layer.v1.tar+gzip",
+                    "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                ],
+            )
             .await
             .context("Failed to pull image from OCI registry")?;
 
@@ -48,7 +62,8 @@ impl OCIClient {
             }
         }
 
-        let content = workflow_content.ok_or_else(|| anyhow::anyhow!("workflow.json not found in OCI image layers"))?;
+        let content = workflow_content
+            .ok_or_else(|| anyhow::anyhow!("workflow.json not found in OCI image layers"))?;
 
         // Save to cache
         if let Some(parent) = cache_path.parent() {
