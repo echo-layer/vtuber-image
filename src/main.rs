@@ -128,7 +128,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     tokio::spawn(async move {
-        while let Some(_) = rx.recv().await {
+        while rx.recv().await.is_some() {
             println!("Allowlist file change detected, reloading...");
             if let Err(e) = cache_clone.load_from_file(&allowlist_path_clone) {
                 eprintln!("Failed to reload allowlist: {}", e);

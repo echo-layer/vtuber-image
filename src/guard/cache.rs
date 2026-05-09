@@ -17,6 +17,12 @@ pub struct GuardCache {
     cache: Arc<RwLock<HashMap<String, ModelEntry>>>,
 }
 
+impl Default for GuardCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GuardCache {
     pub fn new() -> Self {
         Self {
