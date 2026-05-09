@@ -12,9 +12,20 @@ pub struct ModelEntry {
     pub allow_nsfw: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PersonaAssets {
+    pub image_registry: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PersonaConfig {
+    pub assets: PersonaAssets,
+}
+
 #[derive(Debug, Clone)]
 pub struct GuardCache {
-    cache: Arc<RwLock<HashMap<String, ModelEntry>>>,
+    model_cache: Arc<RwLock<HashMap<String, ModelEntry>>>,
+    persona_cache: Arc<RwLock<HashMap<String, PersonaConfig>>>,
 }
 
 impl Default for GuardCache {
@@ -26,7 +37,8 @@ impl Default for GuardCache {
 impl GuardCache {
     pub fn new() -> Self {
         Self {
-            cache: Arc::new(RwLock::new(HashMap::new())),
+            model_cache: Arc::new(RwLock::new(HashMap::new())),
+            persona_cache: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -35,7 +47,7 @@ impl GuardCache {
         let entries: Vec<ModelEntry> = serde_json::from_str(&content)?;
 
         let mut cache = self
-            .cache
+            .model_cache
             .write()
             .map_err(|_| anyhow::anyhow!("Failed to acquire write lock"))?;
         cache.clear();
@@ -47,7 +59,18 @@ impl GuardCache {
     }
 
     pub fn get_model(&self, model_id: &str) -> Option<ModelEntry> {
-        let cache = self.cache.read().ok()?;
+        let cache = self.model_cache.read().ok()?;
         cache.get(model_id).cloned()
+    }
+
+    pub fn get_persona(&self, persona_id: &str) -> Option<PersonaConfig> {
+        let cache = self.persona_cache.read().ok()?;
+        cache.get(persona_id).cloned()
+    }
+
+    pub fn insert_persona(&self, persona_id: String, config: PersonaConfig) {
+        if let Ok(mut cache) = self.persona_cache.write() {
+            cache.insert(persona_id, config);
+        }
     }
 }

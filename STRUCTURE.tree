@@ -8,6 +8,9 @@
 ├── CLAUDE.md
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
+├── deploy
+│   └── k8s
+│       └── vtuber-image.yaml
 ├── DEPLOYMENT_GUIDE.md
 ├── DESIGN_DECISIONS.md
 ├── docker-compose.yml
@@ -50,11 +53,14 @@
 │   ├── guard
 │   │   ├── cache.rs
 │   │   └── mod.rs
-│   └── main.rs
+│   ├── main.rs
+│   └── registry
+│       ├── client.rs
+│       └── mod.rs
 ├── STRATEGY.md
 ├── STRUCTURE.tree
 ├── SUPPORT.md
 ├── TROUBLESHOOTING.md
 └── VISION.md
 
-11 directories, 47 files
+14 directories, 50 files
