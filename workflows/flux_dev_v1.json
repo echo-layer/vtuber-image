@@ -1,0 +1,53 @@
+{
+  "6": {
+    "inputs": {
+      "text": "{{hair_style}}, {{eye_color}}, wearing {{outfit}}, masterpiece, high quality, anime style",
+      "clip": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive Prompt"
+    }
+  },
+  "11": {
+    "inputs": {
+      "model_name": "flux_dev.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Flux.1 dev"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "11",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "VTuber_Flux",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Result"
+    }
+  }
+}
