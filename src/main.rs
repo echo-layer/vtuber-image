@@ -4,6 +4,8 @@ use std::path::Path;
 use std::process::Stdio;
 use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
+use tonic_health::server::health_reporter;
+
 use vtuber_image::v1::image_generator_service_server::{
     ImageGeneratorService, ImageGeneratorServiceServer,
 };
@@ -11,6 +13,28 @@ use vtuber_image::v1::{GenerateRequest, GenerateResponse};
 
 pub mod guard;
 pub mod registry;
+
+#[derive(serde::Serialize)]
+struct AuditLog {
+    timestamp: String,
+    persona_id: String,
+    status: String,
+    reason: Option<String>,
+    details: serde_json::Value,
+}
+
+fn audit_log(persona_id: &str, status: &str, reason: Option<&str>, details: serde_json::Value) {
+    let log = AuditLog {
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        persona_id: persona_id.to_string(),
+        status: status.to_string(),
+        reason: reason.map(|s| s.to_string()),
+        details,
+    };
+    if let Ok(json) = serde_json::to_string(&log) {
+        println!("{}", json);
+    }
+}
 
 pub mod vtuber_image {
     pub mod v1 {
@@ -43,16 +67,49 @@ impl ImageGeneratorService for MyImageGeneratorService {
                 .join("personas")
                 .join(format!("{}.toml", req.persona_id));
             if !persona_path.exists() {
+                audit_log(
+                    &req.persona_id,
+                    "FAIL",
+                    Some("Persona config not found"),
+                    serde_json::json!({ "persona_id": req.persona_id }),
+                );
                 return Err(Status::not_found(format!(
                     "Persona config not found for {}",
                     req.persona_id
                 )));
             }
 
-            let content = std::fs::read_to_string(&persona_path)
-                .map_err(|e| Status::internal(format!("Failed to read persona file: {}", e)))?;
-            let config: guard::cache::PersonaConfig = toml::from_str(&content)
-                .map_err(|e| Status::internal(format!("Failed to parse persona TOML: {}", e)))?;
+            let content = match std::fs::read_to_string(&persona_path) {
+                Ok(c) => c,
+                Err(e) => {
+                    audit_log(
+                        &req.persona_id,
+                        "FAIL",
+                        Some("Failed to read persona file"),
+                        serde_json::json!({ "error": e.to_string() }),
+                    );
+                    return Err(Status::internal(format!(
+                        "Failed to read persona file: {}",
+                        e
+                    )));
+                }
+            };
+
+            let config: guard::cache::PersonaConfig = match toml::from_str(&content) {
+                Ok(c) => c,
+                Err(e) => {
+                    audit_log(
+                        &req.persona_id,
+                        "FAIL",
+                        Some("Failed to parse persona TOML"),
+                        serde_json::json!({ "error": e.to_string() }),
+                    );
+                    return Err(Status::internal(format!(
+                        "Failed to parse persona TOML: {}",
+                        e
+                    )));
+                }
+            };
 
             self.guard_cache
                 .insert_persona(req.persona_id.clone(), config.clone());
@@ -61,16 +118,30 @@ impl ImageGeneratorService for MyImageGeneratorService {
 
         // 2. Pull workflow from OCI Registry
         let image_registry_url = &persona_config.assets.image_registry;
-        let workflow_json = self
-            .registry_client
-            .pull_workflow(image_registry_url)
-            .await
-            .map_err(|e| {
-                Status::internal(format!("Failed to pull workflow from registry: {}", e))
-            })?;
+        let workflow_json = match self.registry_client.pull_workflow(image_registry_url).await {
+            Ok(w) => w,
+            Err(e) => {
+                audit_log(
+                    &req.persona_id,
+                    "FAIL",
+                    Some("Failed to pull workflow from registry"),
+                    serde_json::json!({ "registry_url": image_registry_url, "error": e.to_string() }),
+                );
+                return Err(Status::internal(format!(
+                    "Failed to pull workflow from registry: {}",
+                    e
+                )));
+            }
+        };
 
         // Task 1 (v1.0): Heuristic Workflow Scan
         if let Err(offending_node) = guard::scanner::scan_workflow(&workflow_json) {
+            audit_log(
+                &req.persona_id,
+                "FAIL",
+                Some("Workflow contains blocked node"),
+                serde_json::json!({ "offending_node": offending_node }),
+            );
             let mut status = Status::permission_denied(format!(
                 "Workflow contains blocked node: {}",
                 offending_node
@@ -83,6 +154,7 @@ impl ImageGeneratorService for MyImageGeneratorService {
         }
 
         // 3. Prepare payload for Python orchestration
+        let output_key = format!("{}.png", uuid::Uuid::new_v4());
         let input_payload = serde_json::json!({
             "workflow_json": workflow_json,
             "overrides": {
@@ -91,15 +163,29 @@ impl ImageGeneratorService for MyImageGeneratorService {
                 "outfit": req.overrides.as_ref().map(|o| o.outfit.clone()).unwrap_or_default(),
             },
             "output_bucket": std::env::var("S3_BUCKET_OUTPUTS").unwrap_or_else(|_| "outputs".to_string()),
-            "output_key": format!("{}.png", uuid::Uuid::new_v4()),
+            "output_key": output_key,
         });
 
-        let mut child = std::process::Command::new("python3")
+        let mut child = match std::process::Command::new("python3")
             .arg("python/comfy_client.py")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .map_err(|e| Status::internal(format!("Failed to spawn python worker: {}", e)))?;
+        {
+            Ok(c) => c,
+            Err(e) => {
+                audit_log(
+                    &req.persona_id,
+                    "FAIL",
+                    Some("Failed to spawn python worker"),
+                    serde_json::json!({ "error": e.to_string() }),
+                );
+                return Err(Status::internal(format!(
+                    "Failed to spawn python worker: {}",
+                    e
+                )));
+            }
+        };
 
         let mut stdin = child.stdin.take().expect("Failed to open stdin");
         std::thread::spawn(move || {
@@ -108,12 +194,31 @@ impl ImageGeneratorService for MyImageGeneratorService {
                 .expect("Failed to write to stdin");
         });
 
-        let output = child
-            .wait_with_output()
-            .map_err(|e| Status::internal(format!("Failed to wait for python worker: {}", e)))?;
+        let output = match child.wait_with_output() {
+            Ok(o) => o,
+            Err(e) => {
+                audit_log(
+                    &req.persona_id,
+                    "FAIL",
+                    Some("Failed to wait for python worker"),
+                    serde_json::json!({ "error": e.to_string() }),
+                );
+                return Err(Status::internal(format!(
+                    "Failed to wait for python worker: {}",
+                    e
+                )));
+            }
+        };
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let last_line = stdout.lines().last().unwrap_or_default();
+
+        audit_log(
+            &req.persona_id,
+            "PASS",
+            None,
+            serde_json::json!({ "image_url": last_line, "registry_url": image_registry_url }),
+        );
 
         let reply = GenerateResponse {
             image_url: last_line.to_string(),
@@ -190,9 +295,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         registry_client,
     };
 
+    let (mut health_reporter, health_service) = health_reporter();
+    health_reporter
+        .set_serving::<ImageGeneratorServiceServer<MyImageGeneratorService>>()
+        .await;
+
     println!("ImageGeneratorService server listening on {}", addr);
 
     Server::builder()
+        .add_service(health_service)
         .add_service(ImageGeneratorServiceServer::new(generator))
         .serve(addr)
         .await?;

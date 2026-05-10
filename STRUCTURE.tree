@@ -14,6 +14,14 @@
 ├── DEPLOYMENT_GUIDE.md
 ├── DESIGN_DECISIONS.md
 ├── docker-compose.yml
+├── docs
+│   └── superpowers
+│       ├── plans
+│       │   ├── 2025-05-15-python-disk-hash.md
+│       │   └── 2025-05-24-workflow-scanner.md
+│       └── specs
+│           ├── 2025-05-15-python-disk-hash-design.md
+│           └── 2025-05-24-workflow-scanner-design.md
 ├── FAQ.md
 ├── GEMINI.md
 ├── .github
@@ -44,6 +52,8 @@
 │           └── image.proto
 ├── python
 │   ├── comfy_client.py
+│   ├── __pycache__
+│   │   └── comfy_client.cpython-314.pyc
 │   ├── requirements.txt
 │   └── test_comfy_client.py
 ├── README.md
@@ -52,7 +62,8 @@
 ├── src
 │   ├── guard
 │   │   ├── cache.rs
-│   │   └── mod.rs
+│   │   ├── mod.rs
+│   │   └── scanner.rs
 │   ├── main.rs
 │   └── registry
 │       ├── client.rs
@@ -60,7 +71,10 @@
 ├── STRATEGY.md
 ├── STRUCTURE.tree
 ├── SUPPORT.md
+├── TODO.md
 ├── TROUBLESHOOTING.md
-└── VISION.md
+├── VISION.md
+└── workflows
+    └── flux_dev_v1.json
 
-14 directories, 50 files
+20 directories, 58 files
