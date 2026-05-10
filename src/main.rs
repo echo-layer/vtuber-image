@@ -69,6 +69,19 @@ impl ImageGeneratorService for MyImageGeneratorService {
                 Status::internal(format!("Failed to pull workflow from registry: {}", e))
             })?;
 
+        // Task 1 (v1.0): Heuristic Workflow Scan
+        if let Err(offending_node) = guard::scanner::scan_workflow(&workflow_json) {
+            let mut status = Status::permission_denied(format!(
+                "Workflow contains blocked node: {}",
+                offending_node
+            ));
+            status.metadata_mut().insert(
+                "offending-node",
+                offending_node.parse().unwrap_or("unknown".parse().unwrap()),
+            );
+            return Err(status);
+        }
+
         // 3. Prepare payload for Python orchestration
         let input_payload = serde_json::json!({
             "workflow_json": workflow_json,
