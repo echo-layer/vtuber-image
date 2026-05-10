@@ -1,3 +1,4 @@
+import hashlib
 import requests
 import json
 import uuid
@@ -6,6 +7,20 @@ import os
 import time
 import sys
 from dotenv import load_dotenv
+
+def compute_sha256(file_path):
+    """Compute SHA256 of a file by reading it in 1MB blocks."""
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(1048576), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+class SecurityVerificationError(Exception):
+    def __init__(self, reason, details=None):
+        self.reason = reason
+        self.details = details or {}
+        super().__init__(f"Security failure: {reason}")
 
 class ComfyClient:
     def __init__(self, server_address="http://localhost:8188"):
@@ -81,8 +96,7 @@ class ComfyClient:
         return f"s3://{target_bucket}/{target_key}"
 
     def verify_model(self, model_id, expected_hash, allow_nsfw):
-        print(f"Verifying model {model_id} on Civitai...", file=sys.stderr)
-        # Using a timeout to avoid hanging
+        print(f"Verifying model {model_id} on Civitai and disk...", file=sys.stderr)
         try:
             response = requests.get(f"https://civitai.com/api/v1/models/{model_id}", timeout=10)
             if response.status_code != 200:
@@ -92,32 +106,69 @@ class ComfyClient:
             
             # Check NSFW if restricted
             if not allow_nsfw and metadata.get('nsfw', False):
-                raise Exception(f"Model {model_id} is marked as NSFW, but NSFW is not allowed.")
+                raise SecurityVerificationError("SEC_FAIL_NSFW", {"model_id": model_id})
                 
-            found_hash = False
             versions = metadata.get('modelVersions', [])
             if not versions:
                 raise Exception(f"No versions found for model {model_id}")
                 
-            # We check all versions for the hash to be safe, though usually it's the latest
+            target_file = None
             for version in versions:
                 for file in version.get('files', []):
                     hashes = file.get('hashes', {})
                     sha256 = hashes.get('SHA256')
-                    if sha256:
-                        if sha256.lower() == expected_hash.lower():
-                            found_hash = True
-                            break
-                if found_hash:
+                    if sha256 and sha256.lower() == expected_hash.lower():
+                        target_file = file
+                        break
+                if target_file:
                     break
                         
-            if not found_hash:
-                raise Exception(f"SHA256 hash mismatch for model {model_id}. Expected {expected_hash}")
+            if not target_file:
+                raise SecurityVerificationError("SEC_FAIL_HASH_MISMATCH_CIVITAI", {
+                    "model_id": model_id,
+                    "expected_hash": expected_hash
+                })
+            
+            filename = target_file.get('name')
+            if not filename:
+                raise Exception(f"Filename not found in Civitai metadata for model {model_id}")
+            
+            # 1. Format verification
+            if not filename.lower().endswith('.safetensors'):
+                raise SecurityVerificationError("SEC_FAIL_FORMAT", {
+                    "model_id": model_id,
+                    "filename": filename,
+                    "allowed": ".safetensors"
+                })
+            
+            # 2. Disk location and hash verification
+            # Assume standard path: models/checkpoints/{filename}
+            model_path = os.path.join("models", "checkpoints", filename)
+            
+            if not os.path.exists(model_path):
+                raise SecurityVerificationError("SEC_FAIL_MISSING", {
+                    "model_id": model_id,
+                    "expected_path": model_path
+                })
+            
+            print(f"Computing disk hash for {model_path}...", file=sys.stderr)
+            disk_hash = compute_sha256(model_path)
+            
+            if disk_hash.lower() != expected_hash.lower():
+                raise SecurityVerificationError("SEC_FAIL_HASH", {
+                    "model_id": model_id,
+                    "expected": expected_hash,
+                    "actual": disk_hash
+                })
                 
-            print(f"Model {model_id} verified successfully.", file=sys.stderr)
+            print(f"Model {model_id} ({filename}) verified successfully on disk.", file=sys.stderr)
             return True
         except requests.exceptions.RequestException as e:
             raise Exception(f"Network error verifying model {model_id}: {str(e)}")
+        except SecurityVerificationError:
+            raise
+        except Exception as e:
+            raise Exception(f"Verification error for model {model_id}: {str(e)}")
 
 if __name__ == "__main__":
     client = ComfyClient()
@@ -160,9 +211,23 @@ if __name__ == "__main__":
         # 5. Upload result
         s3_url = client.upload_result(filename, req['output_bucket'], req['output_key'])
         
-        # 6. Output result URL to stdout for Rust to pick up
-        print(s3_url)
+        # 6. Output result JSON to stdout for Rust to pick up
+        print(json.dumps({
+            "status": "SUCCESS",
+            "url": s3_url
+        }))
         
+    except SecurityVerificationError as e:
+        print(json.dumps({
+            "status": "ERROR",
+            "reason": e.reason,
+            "details": e.details
+        }))
+        sys.exit(1)
     except Exception as e:
-        print(f"Error: {str(e)}", file=sys.stderr)
+        print(json.dumps({
+            "status": "ERROR",
+            "reason": "SYSTEM_ERROR",
+            "details": {"message": str(e)}
+        }))
         sys.exit(1)
