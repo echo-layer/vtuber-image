@@ -1,0 +1,2 @@
+[registries.vtuber-registry]
+index = "http://kellnr.cntm.labs:31500/api/v1/crates"
